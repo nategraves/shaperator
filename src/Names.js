@@ -7,10 +7,12 @@ class Names extends Component {
   constructor(props) {
     super(props);
     this.id = this.props.id;
+    const name = localStorage.getItem(`named${this.id}`) || '';
 
     this.state = {
-      name: '',
+      name,
       names: null,
+      named: name !== '',
       loading: true
     };
   }
@@ -25,22 +27,18 @@ class Names extends Component {
     axios.get(`https://699de3fa.ngrok.io/names/${this.id}`).then(resp => this.setState({ names: resp.data.names, loading: false }));
   }
 
-  /*
   submitName() {
+    this.setState({ named: true });
     this.loading = true;
+    const name = this.state.name;
     fetch(`https://699de3fa.ngrok.io/names/${this.id}`, {
       method: 'POST',
       body: JSON.stringify({ name: this.state.name })
-    }).then((d) => {
-      debugger;
-      const resp = d.json().then((resp, this) => {
-        debugger;
-        const names = resp.names;
-        this.setState({ names });
-      }); 
+    }).then(() => {
+      this.updateNames();
+      localStorage.setItem(`named${this.id}`, name);
     });
   }
-  */
 
   componentDidMount() {
     this.updateNames();
@@ -57,7 +55,7 @@ class Names extends Component {
     }
     return (
       <div className="names-container">
-        { !this.state.loading && !this.state.name &&
+        { !this.state.loading && !this.state.named &&
           <div className="name-form">
             <input
               type="text"
@@ -71,7 +69,7 @@ class Names extends Component {
             </span>
           </div>
         }
-        { this.state.name && !this.state.loading &&
+        { this.state.named && !this.state.loading &&
           <h1>{ this.state.name }</h1>
         }
         <div className="names-list">
