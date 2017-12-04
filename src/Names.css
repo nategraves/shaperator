@@ -1,0 +1,22 @@
+.names-container {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.name-form {
+  display: flex;
+  flex: 0 1 450px;
+}
+
+.name-form input {
+  flex: 0 1 auto;
+}
+
+.name-form button {
+  flex: 1 1 auto;
+}
+
+.names-list {
+  display: none;
+}
