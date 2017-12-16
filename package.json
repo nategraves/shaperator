@@ -19,6 +19,7 @@
     "react-icons": "^2.2.7",
     "react-router-dom": "^4.2.2",
     "svg.js": "^2.6.3",
-    "tinycolor2": "^1.4.1"
+    "tinycolor2": "^1.4.1",
+    "underscore": "^1.8.3"
   }
 }

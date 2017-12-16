@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 
 import './Names.css';
 
@@ -8,12 +7,13 @@ class Names extends Component {
     super(props);
     this.id = this.props.id;
     const name = localStorage.getItem(`named${this.id}`) || '';
+    const names = this.props.names;
 
     this.state = {
       name,
-      names: null,
+      names,
       named: name !== '',
-      loading: true
+      loading: false
     };
   }
 
@@ -24,16 +24,21 @@ class Names extends Component {
   updateNames() {
     this.loading = true;
     let names = null;
-    axios.get(`https://699de3fa.ngrok.io/names/${this.id}`).then(resp => this.setState({ names: resp.data.names, loading: false }));
   }
 
   submitName() {
+    if (this.state.name.length < 2) return;
     this.setState({ named: true });
     this.loading = true;
     const name = this.state.name;
-    fetch(`https://699de3fa.ngrok.io/names/${this.id}`, {
+    const url = `https://699de3fa.ngrok.io/api/names`;
+    fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ name: this.state.name })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        name: this.state.name,
+        path_id: this.id
+      })
     }).then(() => {
       this.updateNames();
       localStorage.setItem(`named${this.id}`, name);
@@ -46,10 +51,11 @@ class Names extends Component {
 
   render() {
     let names;
-    if (this.state.names) {
+    if (this.state.names.length > 0) {
       names = this.state.names.map((name, index) => {
+        const isMyName = name === this.state.name;
         return (
-          <div className="name" key={index}>{name}</div>
+          <div className={name + isMyName ? ' active' : ''} key={index}>{name}</div>
         );
       });
     }
@@ -65,15 +71,22 @@ class Names extends Component {
               onChange={(e) => this.updateName(e.currentTarget.value)}
             />
             <span className="input-group-btn">
-              <button className="btn btn-secondary" type="button" onClick={() => this.submitName()}>Submit</button>
+              <button 
+                className="btn btn-secondary"
+                disabled={ this.state.name.length < 2 }
+                type="button"
+                onClick={() => this.submitName()}
+              >Submit</button>
             </span>
           </div>
         }
-        { this.state.named && !this.state.loading &&
-          <h1>{ this.state.name }</h1>
-        }
-        <div className="names-list">
-          { names }
+        <div className="names-list-container">
+          <div className="names-list">
+            { this.state.named &&
+              <h1>{ this.state.name }</h1>
+            }
+            { names }
+          </div>
         </div>
       </div>
     );
