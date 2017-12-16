@@ -104,36 +104,6 @@ class Home extends Component {
     } 
   }
 
-  renderPath() {
-    return (
-      <div className="PathControl">
-        <div className="PathControlInner">
-          <div className="input-group">
-            { this.renderNames() }
-          </div>
-        </div>
-        <div className="PathControlInner">
-          <div className="input-group">
-            <button
-              className="btn btn-secondary"
-              type="button"
-              onClick={() => this.saveSVG()}
-            >
-              <FaArrowCircleODown/><br/>SVG
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              type="button" 
-              onClick={() => this.savePNG()}
-            >
-              <FaArrowCircleODown/><br/>PNG
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   generatePath() {
     this.loading = true;
     fetch('https://699de3fa.ngrok.io/generate/3')
@@ -180,7 +150,7 @@ class Home extends Component {
     const maxScale = 0.667;
     const size = window.innerHeight * 0.5;
     let bb;
-    const _draw = SVG('svgs').size(size, size);
+    const _draw = SVG('svg').size(size, size);
     const noBg = math.randomInt(1);
     const newColor = tinycolor.random().toHexString(); 
     let _drawnPath;
@@ -230,17 +200,60 @@ class Home extends Component {
       <div className="Container">
         <div className="Home">
           <h1>Shaperator</h1>
-          <p className="Home-intro">Computer-drawn vectors.</p>
-          {!this.loading && this.state.currentPath &&
-            <button className="next" onClick={() => this.nextPath()}>
-              <TiArrowRightThick />
-            </button>
-          }
+          <p className="Home-intro">Shapes drawn by AI</p>
         </div>
         <div className="Main">
-          <div id="svgs"></div>
+          <div id="svg">
+            {!this.loading && this.state.currentPath &&
+              <div className="left-gutter">
+                <div className="download-buttons">
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => this.saveSVG()}>
+                    <FaArrowCircleODown/>SVG
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    type="button" 
+                    onClick={() => this.savePNG()}>
+                    <FaArrowCircleODown/>PNG
+                  </button>
+                </div>
+              </div>
+            }
+            {!this.loading && this.state.currentPath &&
+              <div className="right-gutter">
+                <button className="next" onClick={() => this.nextPath()}>
+                  <TiArrowRightThick />
+                </button>
+              </div>
+            }
+          </div>
+          <div className="names">
+            { !this.state.loading && !this.state.named &&
+              <div className="name-form">
+                <input
+                  type="text"
+                  placeholder="What should we call me?"
+                  className="name-input"
+                  value={this.state.name}
+                  onChange={(e) => this.updateName(e.currentTarget.value)}
+                />
+                <span className="input-group-btn">
+                  <button 
+                    className="name-submit"
+                    disabled={ this.state.name.length < 2 }
+                    type="button"
+                    onClick={() => this.submitName()}
+                  >Submit</button>
+                </span>
+              </div>
+            }
+
+          </div>
+          {/*
           <div id="controls">
-            { this.state.currentPath && !this.loading && this.renderPath() }
             { this.state.currentPath && this.state.currentPath.names && !this.loading && this.renderNames() }
             { this.loading && <span className="loader"><span className="loader-inner"></span></span> }
           </div>
@@ -270,6 +283,7 @@ class Home extends Component {
               </div>
             </div>
           </div>
+          */}
         </div>
       </div>
     );
