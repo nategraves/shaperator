@@ -54,12 +54,18 @@ class Home extends Component {
   nextPath() {
     const pathPool = this.state.pathPool;
     const pathObj = pathPool.pop();
+    const pathId = pathObj.id;
     const currentNames = pathObj.names;
     const currentPath = pathObj.d; 
+    const name = localStorage.getItem(`named${pathId}`) || ''; 
+    const named = name !== '';
     this.setState({
       pathPool,
+      pathId,
+      currentNames,
       currentPath,
-      currentNames
+      name,
+      named
     });
     if (this.state.pathPool.length === 0) {
       this.updatePool();
@@ -88,7 +94,7 @@ class Home extends Component {
       const currentNames = pathObj.names;
       const currentPath = pathObj.d;
       const pageToFetch = this.state.pageToFetch + 1;
-      const name = localStorage.getItem(`name${pathId}`) || ''; 
+      const name = localStorage.getItem(`named${pathId}`) || ''; 
       const named = name !== '';
       this.setState({ pathPool, currentNames, currentPath, pathId, name, named, pageToFetch });
       this.drawSVG();
@@ -101,11 +107,20 @@ class Home extends Component {
     );
 
     if (this.state.currentNames) {
+      const uniqueNames = [];
+      for (let i = 0; i < this.state.currentNames.length; i++) {
+        
+      }
+
       names = _.map(this.state.currentNames, (name) => {
         return (
-          <div data-key={name.path_id} key={name.id}>{name.name}</div>
+          <div data-key={name.path_id} key={name.id} className={this.state.name === name.name ? 'name same' : 'name'}>
+            {name.name}
+          </div>
         );
       });
+
+      return names;
     }
   }
 
@@ -131,24 +146,23 @@ class Home extends Component {
     this.setState({ named: true });
     this.loading = true;
     const name = this.state.name;
+    const path_id = this.state.pathId;
     const url = `https://699de3fa.ngrok.io/api/names`;
     fetch(url, {
       method: 'POST',
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        name: this.state.name,
-        path_id: this.state.pathId
-      })
+      body: JSON.stringify({ name, path_id, })
     }).then((resp) => {
       return resp.json();
     }).then((resp) => {
       this.loading = false;
+      debugger;
+      localStorage.setItem(`named${resp.id}`, resp.name);
       this.setState({
         currentNames: this.state.currentNames.push(resp)
       });
     });
   }
-
 
   drawSVG() {
     if (this.svg) this.svg.remove();
@@ -225,7 +239,7 @@ class Home extends Component {
           </div>
           <div className="names">
             { !this.state.loading && !this.state.named &&
-              <div className="name-form">
+              <form onSubmit={() => this.submitName()} className="name-form">
                 <input
                   type="text"
                   placeholder="What should we call me?"
@@ -241,7 +255,7 @@ class Home extends Component {
                     onClick={() => this.submitName()}
                   >Submit</button>
                 </span>
-              </div>
+              </form>
             }
             { !this.state.loading && this.state.named &&
               <div className="names-list">

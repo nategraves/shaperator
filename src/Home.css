@@ -33,6 +33,10 @@ button.next {
   transition: 0.25s all ease-in-out;
 }
 
+button.next:focus {
+  outline: none;
+}
+
 button.next:hover {
   color: #d290d4;
 }
@@ -111,8 +115,26 @@ button.next:hover {
 .names {
   align-items: center;
   display: flex;
-  flex: 0 1 100px;
+  flex: 0 1 200px;
+  overflow: scroll;
+  position: relative;
   width: 33vw;
+}
+
+.names-list {
+  position: absolute;
+  top: 0;
+}
+
+.name {
+  margin: 5px 0;
+  padding: 5px 0;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.name.same {
+  font-weight: bold;
 }
 
 .name-form {
@@ -122,15 +144,31 @@ button.next:hover {
 
 .names input {
   border: 0;
-  border-bottom: 1px solid #818181;
+  border-bottom: 2px solid #818181;
   height: 40px;
   flex: 1 1 auto;
+  transition: 0.3s all ease-in-out;
+}
+
+.names input:focus {
+  outline: none;
+  border-bottom: 2px solid #414141;
 }
 
 .names button {
   border: 0;
   height: 40px;
   flex: 0 0 auto;
+}
+
+.name-submit {
+  color: #33aa0e;
+  transition: 0.3s all ease-in-out;
+}
+
+.name-submit:disabled,
+.name-submit[disabled] {
+  color: #939393;
 }
 
 .download-buttons {
