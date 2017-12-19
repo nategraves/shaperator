@@ -1,7 +1,7 @@
 .Container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   justify-content: center;
   width: 100vw;
 }
@@ -109,9 +109,10 @@ button.next:hover {
 }
 
 .names {
+  align-items: center;
   display: flex;
   flex: 0 1 100px;
-  align-items: center;
+  width: 33vw;
 }
 
 .name-form {

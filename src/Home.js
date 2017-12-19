@@ -17,17 +17,16 @@ class Home extends Component {
     super(props);
     const fgColor = this.props.fgColor || '#ffffff';
     const bgColor = this.props.bgColor || tinycolor.random().toHexString();
-    const name = ''; //localStorage.getItem(`name${pathIndex}`) || ''; 
 
     this.state = {
       bgColor,
       currentPath: null,
       currentNames: null,
       fgColor,
-      name,
-      named: name !== '',
+      name: '',
+      named: false,
       pageToFetch: 1,
-      pathIndex: null,
+      pathId: null,
       pathPool: []
     };
     this.loading = true;
@@ -89,19 +88,25 @@ class Home extends Component {
       const currentNames = pathObj.names;
       const currentPath = pathObj.d;
       const pageToFetch = this.state.pageToFetch + 1;
-      this.setState({ pathPool, currentNames, currentPath, pathId, pageToFetch });
+      const name = localStorage.getItem(`name${pathId}`) || ''; 
+      const named = name !== '';
+      this.setState({ pathPool, currentNames, currentPath, pathId, name, named, pageToFetch });
       this.drawSVG();
     });
   }
 
   renderNames() {
-    if (!this.state.currentPath || !this.state.currentPath.names) return;
     let names = (
-      <p>You can be the first to give me a name</p>
+      <div>No one has named me</div>
     );
-    if (this.state.currentPath.names.length > 0) {
-      names = _.map(this.state.currentPath.names, name => <div>{ name }</div>);
-    } 
+
+    if (this.state.currentNames) {
+      names = _.map(this.state.currentNames, (name) => {
+        return (
+          <div data-key={name.path_id} key={name.id}>{name.name}</div>
+        );
+      });
+    }
   }
 
   generatePath() {
@@ -184,18 +189,6 @@ class Home extends Component {
   }
 
   render() {
-    let names = (
-      <div>No one has named me</div>
-    );
-
-    if (this.state.currentNames) {
-      names = _.map(this.state.currentNames, (name) => {
-        return (
-          <div>{ name.name }</div>
-        );
-      });
-    }
-
     return (
       <div className="Container">
         <div className="Home">
@@ -250,7 +243,11 @@ class Home extends Component {
                 </span>
               </div>
             }
-
+            { !this.state.loading && this.state.named &&
+              <div className="names-list">
+                { this.renderNames() }
+              </div>
+            }
           </div>
           {/*
           <div id="controls">
@@ -258,29 +255,7 @@ class Home extends Component {
             { this.loading && <span className="loader"><span className="loader-inner"></span></span> }
           </div>
           <div className="names-container">
-            { !this.state.loading && !this.state.named &&
-              <div className="name-form form-group">
-                <input
-                  type="text"
-                  placeholder="What should we call me?"
-                  className="form-control"
-                  value={this.state.name}
-                  onChange={(e) => this.updateName(e.currentTarget.value)}
-                />
-                <span className="input-group-btn">
-                  <button 
-                    className="btn btn-secondary"
-                    disabled={ this.state.name.length < 2 }
-                    type="button"
-                    onClick={() => this.submitName()}
-                  >Submit</button>
-                </span>
-              </div>
-            }
             <div className="names-list-container">
-              <div className="names-list">
-                { names }
-              </div>
             </div>
           </div>
           */}
