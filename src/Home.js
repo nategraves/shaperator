@@ -11,6 +11,8 @@ import TiArrowRightThick from 'react-icons/lib/ti/arrow-right-thick';
 import './Home.css';
 
 const PRELOAD_COUNT = 20;
+const API_ID = '9a4d57c5';
+const API_URL = `https://${API_ID}.ngrok.io/`;
 
 class Home extends Component {
   constructor(props) {
@@ -29,8 +31,13 @@ class Home extends Component {
       pathId: null,
       pathPool: []
     };
-    this.loading = true;
+
+    this.loading = false;
     this.svg = null;
+  }
+
+  componentDidMount() {
+    this.updatePool();
   }
 
   swapColors(svg) {
@@ -53,115 +60,87 @@ class Home extends Component {
 
   nextPath() {
     const pathPool = this.state.pathPool;
-    const pathObj = pathPool.pop();
-    const pathId = pathObj.id;
-    const currentNames = pathObj.names;
-    const currentPath = pathObj.d; 
+    const path = pathPool.pop();
+    const pathAttr = path.attributes;
+    const pathId = path.id;
+    const nameIds = path.relationships.names.data;
+    const currentPath = pathAttr.d; 
     const name = localStorage.getItem(`named${pathId}`) || ''; 
     const named = name !== '';
+
     this.setState({
       pathPool,
       pathId,
-      currentNames,
       currentPath,
       name,
       named
     });
+
     if (this.state.pathPool.length === 0) {
       this.updatePool();
+    } else {
+      this.fetchNames(nameIds);
     }
-    this.drawSVG();
   }
 
   updateName(name) {
-    this.setState({ name });
+    this.setState({ name: name.toUpperCase() });
   }
 
   updatePool() {
-    const url = `https://699de3fa.ngrok.io/api/paths?page=${this.state.pageToFetch}`;
+    this.loading = true;
+    const url = `${API_URL}api/paths?page=${this.state.pageToFetch}`;
     const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
+    headers.append('Content-Type', 'application/vnd.api+json');
     fetch(url, {
       method: 'GET',
-      headers: { Accept: "application/json" }
+      headers: { "Accept": "application/vnd.api+json" }
     }).then((resp) => { 
       return resp.json(); 
     }).then((resp) => {
-      this.loading = false;
-      const pathPool = resp.objects;
-      const pathObj = pathPool.pop();
-      const pathId = pathObj.id;
-      const currentNames = pathObj.names;
-      const currentPath = pathObj.d;
+      const pathPool = resp.data;
+      const path = pathPool.pop();
+      const pathAttr = pathPool.pop().attributes;
+      const pathId = path.id;
+      const nameIds = path.relationships.names.data;
+      const currentPath = pathAttr.d;
       const pageToFetch = this.state.pageToFetch + 1;
       const name = localStorage.getItem(`named${pathId}`) || ''; 
       const named = name !== '';
-      this.setState({ pathPool, currentNames, currentPath, pathId, name, named, pageToFetch });
-      this.drawSVG();
+      this.setState({ pathPool, currentPath, pathId, name, named, pageToFetch });
+
+      this.fetchNames(nameIds);
     });
   }
 
-  renderNames() {
-    let names = (
-      <div>No one has named me</div>
-    );
+  fetchNames(nameIds) {
+    if (!nameIds || nameIds.length === 0) return;
 
-    if (this.state.currentNames) {
-      const uniqueNames = [];
-      for (let i = 0; i < this.state.currentNames.length; i++) {
-        
-      }
+    const url = `${API_URL}api/paths?page=${this.state.pageToFetch}`;
+    const names = [];
+    for (let i = 0; i < nameIds.length; i++) {
+      const nameId = nameIds[i].id;
+      const url = `${API_URL}api/names/${nameId}`;
+      fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/vnd.api+json' }
+      }).then((resp) => {
+        return resp.json();
+      }).then((resp) => {
+        const { name, created } = resp.data.attributes;
+        const voteCount = resp.data.relationships.votes.data.length;
+        names.push({
+          name,
+          created,
+          voteCount
+        });
 
-      names = _.map(this.state.currentNames, (name) => {
-        return (
-          <div data-key={name.path_id} key={name.id} className={this.state.name === name.name ? 'name same' : 'name'}>
-            {name.name}
-          </div>
-        );
-      });
-
-      return names;
-    }
-  }
-
-  generatePath() {
-    this.loading = true;
-    fetch('https://699de3fa.ngrok.io/generate/3')
-      .then((d) => {
-        const resp = d.json(); 
-        if (typeof resp.path !== 'undefined') {
-          this.loading = false;
-          const paths = this.state.paths.unshift(resp.path);
-          this.setState({ paths });
+        if (i === nameIds.length - 1) {
+          this.setState({ currentNames: names });
+          this.drawSVG();
         }
       });
-  }
-
-  updateColor(svg, event) {
-    console.log(event);
-  }
-
-  submitName() {
-    if (this.state.name.length < 2) return;
-    this.setState({ named: true });
-    this.loading = true;
-    const name = this.state.name;
-    const path_id = this.state.pathId;
-    const url = `https://699de3fa.ngrok.io/api/names`;
-    fetch(url, {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, path_id, })
-    }).then((resp) => {
-      return resp.json();
-    }).then((resp) => {
-      this.loading = false;
-      debugger;
-      localStorage.setItem(`named${resp.id}`, resp.name);
-      this.setState({
-        currentNames: this.state.currentNames.push(resp)
-      });
-    });
+    }
   }
 
   drawSVG() {
@@ -196,10 +175,76 @@ class Home extends Component {
     _draw.click(() => this.swapColors(_draw.node));
     _draw.mousemove((e) => this.updateColor(this, e));
     this.svg = _draw;
+    this.loading = false;
   }
 
-  componentDidMount() {
-    this.updatePool();
+  renderNames() {
+    let names = (
+      <div>No one has named me</div>
+    );
+
+    if (this.state.currentNames) {
+      const uniqueNames = _.uniq(this.state.currentNames);
+
+      names = _.map(uniqueNames, (name) => {
+        return (
+          <div data-key={name.path_id} key={name.id} className={this.state.name === name.name ? 'name same' : 'name'}>
+            <div>{name.name}</div>
+            <div className="name-count">{name.voteCount}</div>
+          </div>
+        );
+      });
+
+      return names;
+    }
+  }
+
+  submitName() {
+    if (this.state.name.length < 2) return;
+
+    this.loading = true;
+    const newName = this.state.name.toUpperCase();
+    const pathId = this.state.pathId;
+    const data = {
+      "type": "names",
+      "attributes": {
+        "name": newName,
+        "path_id": pathId
+      }
+    };
+
+    const headers = {
+      "Content-Type": "application/vnd.api+json",
+      "Accept": "application/vnd.api+json"
+    }
+
+    const url = `${API_URL}api/names`;
+
+    fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ "data": data })
+    }).then((resp) => {
+      return resp.json();
+    }).then((resp) => {
+      const name = {
+        name: newName,
+        created: resp.data.attributes.created,
+        voteCount: 0
+      }
+
+      this.setState({
+        currentNames: this.state.currentNames.push(name),
+        named: true 
+      });
+
+      localStorage.setItem(`named${resp.pathId}`, newName);
+      this.loading = false;
+    });
+  }
+
+  updateColor(svg, event) {
+    console.log(event);
   }
 
   render() {

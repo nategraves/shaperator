@@ -116,21 +116,53 @@ button.next:hover {
   align-items: center;
   display: flex;
   flex: 0 1 200px;
-  overflow: scroll;
+  overflow-y: auto;
   position: relative;
   width: 33vw;
 }
 
 .names-list {
+  display: flex;
+  flex-flow: column wrap;
   position: absolute;
   top: 0;
+  width: 100%;
 }
 
 .name {
-  margin: 5px 0;
-  padding: 5px 0;
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
   font-size: 18px;
+  height: 34px;
   line-height: 1;
+  justify-content: space-between;
+  margin: 5px 0;
+  padding: 5px 10px;
+  transition: 0.3s all ease-in-out;
+}
+
+.name:hover {
+  background: #dedede;
+}
+
+.name:hover .name-count {
+  background: #fff;
+  color: #818181;
+}
+
+.name-count {
+  align-items: center;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  font-size: 12px;
+  height: 26px;
+  flex: 0 0 auto;
+  justify-content: center;
+  line-height: 1;
+  transition: 0.3s all ease-in-out;
+  width: 26px;
 }
 
 .name.same {
@@ -147,6 +179,7 @@ button.next:hover {
   border-bottom: 2px solid #818181;
   height: 40px;
   flex: 1 1 auto;
+  text-transform: uppercase;
   transition: 0.3s all ease-in-out;
 }
 
