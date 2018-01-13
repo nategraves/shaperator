@@ -11,12 +11,31 @@ import TiArrowRightThick from 'react-icons/lib/ti/arrow-right-thick';
 import './Home.css';
 
 const PRELOAD_COUNT = 20;
-const API_ID = '9a4d57c5';
+const API_ID = 'c586e733';
 const API_URL = `https://${API_ID}.ngrok.io/`;
 
 class Home extends Component {
   constructor(props) {
     super(props);
+
+    this.userId = localStorage.getItem('userId');
+
+    if (!this.userId) {
+      const url = `${API_URL}user/new`;
+      const headers = new Headers();
+      headers.append('Content-Type', 'application/vnd.api+json');
+
+      fetch(url, {
+        method: 'GET',
+        headers: { "Accept": "application/vnd.api+json" },
+      }).then((resp) => { 
+        return resp.json(); 
+      }).then((resp) => {
+        this.userId = resp.id;
+        localStorage.setItem('userId', this.userId);
+      });
+    }
+
     const fgColor = this.props.fgColor || '#ffffff';
     const bgColor = this.props.bgColor || tinycolor.random().toHexString();
 
@@ -59,6 +78,7 @@ class Home extends Component {
   }
 
   nextPath() {
+    debugger;
     const pathPool = this.state.pathPool;
     const path = pathPool.pop();
     const pathAttr = path.attributes;
@@ -89,9 +109,17 @@ class Home extends Component {
 
   updatePool() {
     this.loading = true;
+
     const url = `${API_URL}api/paths?page=${this.state.pageToFetch}`;
     const headers = new Headers();
     headers.append('Content-Type', 'application/vnd.api+json');
+
+    /*
+    const filters = {
+      order_by: [{"field": "created", "direction": "desc"}]
+    };
+    */
+
     fetch(url, {
       method: 'GET',
       headers: { "Accept": "application/vnd.api+json" }
@@ -188,9 +216,9 @@ class Home extends Component {
 
       names = _.map(uniqueNames, (name) => {
         return (
-          <div data-key={name.path_id} key={name.id} className={this.state.name === name.name ? 'name same' : 'name'}>
-            <div>{name.name}</div>
-            <div className="name-count">{name.voteCount}</div>
+          <div key={name.path_id + name.id} className={this.state.name === name.name ? 'name same' : 'name'}>
+            <div key={ name.name + name.id }>{name.name}</div>
+            <div key={ `votes${name.id}` }className="name-count">{name.voteCount}</div>
           </div>
         );
       });
@@ -224,9 +252,9 @@ class Home extends Component {
       method: 'POST',
       headers,
       body: JSON.stringify({ "data": data })
-    }).then((resp) => {
+    }).then( (resp) => {
       return resp.json();
-    }).then((resp) => {
+    }).then( (resp) => {
       const name = {
         name: newName,
         created: resp.data.attributes.created,
@@ -256,48 +284,44 @@ class Home extends Component {
         </div>
         <div className="Main">
           <div id="svg">
-            {!this.loading && this.state.currentPath &&
-              <div className="left-gutter">
-                <div className="download-buttons">
-                  <button
-                    className="btn btn-secondary"
-                    type="button"
-                    onClick={() => this.saveSVG()}>
-                    <FaArrowCircleODown/>SVG
-                  </button>
-                  <button 
-                    className="btn btn-secondary" 
-                    type="button" 
-                    onClick={() => this.savePNG()}>
-                    <FaArrowCircleODown/>PNG
-                  </button>
-                </div>
-              </div>
-            }
-            {!this.loading && this.state.currentPath &&
-              <div className="right-gutter">
-                <button className="next" onClick={() => this.nextPath()}>
-                  <TiArrowRightThick />
+            <div className="left-gutter">
+              <div className="download-buttons">
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={ () => this.saveSVG() }>
+                  <FaArrowCircleODown/>SVG
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  type="button" 
+                  onClick={ () => this.savePNG() }>
+                  <FaArrowCircleODown/>PNG
                 </button>
               </div>
-            }
+            </div>
+            <div className="right-gutter">
+              <button className="next" onClick={ () => this.nextPath() }>
+                <TiArrowRightThick />
+              </button>
+            </div>
           </div>
           <div className="names">
             { !this.state.loading && !this.state.named &&
-              <form onSubmit={() => this.submitName()} className="name-form">
+              <form onSubmit={ () => this.submitName() } className="name-form">
                 <input
                   type="text"
                   placeholder="What should we call me?"
                   className="name-input"
-                  value={this.state.name}
-                  onChange={(e) => this.updateName(e.currentTarget.value)}
+                  value={ this.state.name }
+                  onChange={ (e) => this.updateName(e.currentTarget.value) }
                 />
                 <span className="input-group-btn">
                   <button 
                     className="name-submit"
                     disabled={ this.state.name.length < 2 }
                     type="button"
-                    onClick={() => this.submitName()}
+                    onClick={ () => this.submitName() }
                   >Submit</button>
                 </span>
               </form>
@@ -308,16 +332,6 @@ class Home extends Component {
               </div>
             }
           </div>
-          {/*
-          <div id="controls">
-            { this.state.currentPath && this.state.currentPath.names && !this.loading && this.renderNames() }
-            { this.loading && <span className="loader"><span className="loader-inner"></span></span> }
-          </div>
-          <div className="names-container">
-            <div className="names-list-container">
-            </div>
-          </div>
-          */}
         </div>
       </div>
     );
